@@ -77,3 +77,11 @@ func main() {
     fmt.Printf(\"Total time elapsed: %s\\n\", time.Since(t))
 }
 "
+
+# Now handle the go module stuff
+pushd $AOC_DIR
+pushd day$argv[1]
+go mod init day$argv[1]
+popd
+go work use day$argv[1]
+popd
