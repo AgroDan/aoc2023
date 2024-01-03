@@ -1,0 +1,204 @@
+package cosmos
+
+import "fmt"
+
+// type direction uint
+
+// const (
+// 	stop direction = iota
+// 	up
+// 	down
+// 	left
+// 	right
+// )
+
+type Coord struct {
+	X, Y int
+}
+
+type Cosmos struct {
+	m [][]rune
+}
+
+func NewCosmos(lines []string) Cosmos {
+	// Creates a new Cosmos object.
+	c := Cosmos{}
+	for x := 0; x < len(lines); x++ {
+		var line []rune
+		for y := 0; y < len(lines[x]); y++ {
+			line = append(line, rune(lines[x][y]))
+		}
+		c.m = append(c.m, line)
+	}
+
+	c.universeExpansion()
+	return c
+}
+
+func (c *Cosmos) universeExpansion() {
+	// simply expands the universe as defined in the challenge
+	// First, do columns first. X's.
+	var colsToExpand []int
+	var rowsToExpand []int
+	for x := 0; x < len(c.m); x++ {
+		isEmpty := true
+		// go down the column
+		for y := 0; y < len(c.m[x]); y++ {
+			if c.m[x][y] != '.' {
+				isEmpty = false
+				break
+			}
+		}
+		if isEmpty {
+			colsToExpand = append(colsToExpand, x)
+		}
+	}
+
+	// Now do the same for each row.
+	for y := 0; y < len(c.m[0]); y++ {
+		isEmpty := true
+		for x := 0; x < len(c.m); x++ {
+			if c.m[x][y] != '.' {
+				isEmpty = false
+				break
+			}
+		}
+		if isEmpty {
+			rowsToExpand = append(rowsToExpand, y)
+		}
+	}
+	fmt.Printf("Cols to expand: %+v\n", colsToExpand)
+	fmt.Printf("Rows to expand: %+v\n", rowsToExpand)
+}
+
+func (c Cosmos) PrintMap() {
+	// Prints the map so I know I read it in properly
+	for x := 0; x < len(c.m); x++ {
+		for y := 0; y < len(c.m[x]); y++ {
+			fmt.Printf("%c", c.m[x][y])
+		}
+		fmt.Printf("\n")
+	}
+}
+
+func (c *Cosmos) ExpandSpace(count int) {
+	// This, given a count, will expand all rows and columns
+	// by the given count that do NOT have any galaxies contained
+
+	var colIndexes, rowIndexes []int
+
+	// Lets work with rows first
+	for x := 0; x < len(c.m); x++ {
+		isEmpty := true
+		for y := 0; y < len(c.m[x]); y++ {
+			if c.m[x][y] == '#' {
+				isEmpty = false
+				break
+			}
+		}
+		if isEmpty {
+			rowIndexes = append(rowIndexes, x)
+		}
+	}
+	fmt.Printf("Empty rows: %+v\n", rowIndexes)
+
+	// Now the cols
+	for y := 0; y < len(c.m[0]); y++ {
+		isEmpty := true
+		for x := 0; x < len(c.m); x++ {
+			if c.m[x][y] == '#' {
+				isEmpty = false
+				break
+			}
+		}
+		if isEmpty {
+			colIndexes = append(colIndexes, y)
+		}
+	}
+	fmt.Printf("Empty cols: %+v\n", colIndexes)
+
+	// Now we'll build the columns
+	// remember that we need to increase the index
+	// for every col we add
+	colOffset := 0
+	for _, v := range colIndexes {
+		for i := 0; i < count; i++ {
+			c.m = addCol(c.m, v+colOffset)
+			colOffset++
+		}
+	}
+
+	// now the rows
+	rowOffset := 0
+	for _, v := range rowIndexes {
+		for i := 0; i < count; i++ {
+			c.m = addRow(c.m, v+rowOffset)
+			rowOffset++
+		}
+	}
+}
+
+func addCol(original [][]rune, colIndex int) [][]rune {
+	numRows, numCols := len(original), len(original[0])
+	newArray := make([][]rune, numRows+1)
+
+	for i := range newArray {
+		if i == colIndex {
+			newArray[i] = make([]rune, numCols)
+			for j := range newArray[i] {
+				newArray[i][j] = '.'
+			}
+		} else {
+			oldRowIndex := i
+			if i > colIndex {
+				oldRowIndex = i - 1
+			}
+			newArray[i] = make([]rune, numCols)
+			copy(newArray[i], original[oldRowIndex])
+		}
+	}
+
+	return newArray
+}
+
+// func addRow(original [][]rune, rowIndex int) [][]rune {
+// 	newArray := make([][]rune, len(original))
+
+// 	for i, col := range original {
+// 		newArray[i] = make([]rune, len(col)+1)
+// 		for j := range col {
+// 			if j == rowIndex {
+// 				newArray[i][j] = '.'
+// 			} else {
+// 				oldColIndex := j
+// 				if j > rowIndex {
+// 					oldColIndex = j - 1
+// 				}
+// 				newArray[i][j] = original[i][oldColIndex]
+// 			}
+// 		}
+// 		if rowIndex == len(col) { // insert at the end
+// 			newArray[i][rowIndex] = '.'
+// 		}
+// 	}
+// 	return newArray
+// }
+
+func addRow(original [][]rune, rowIndex int) [][]rune {
+	newArray := make([][]rune, len(original))
+
+	for i, row := range original {
+		newArray[i] = make([]rune, len(row)+1)
+		for j := range newArray[i] {
+			if j < rowIndex {
+				newArray[i][j] = original[i][j]
+			} else if j == rowIndex {
+				// insert
+				newArray[i][j] = '.'
+			} else {
+				newArray[i][j] = original[i][j-1]
+			}
+		}
+	}
+	return newArray
+}
