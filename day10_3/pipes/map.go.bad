@@ -1,0 +1,176 @@
+package pipes
+
+import "errors"
+
+type PipeMap struct {
+	m     [][]rune
+	start Coord
+}
+
+func NewPipeMap(s []string) PipeMap {
+	p := PipeMap{}
+	for _, line := range s {
+		var row []rune
+		for _, char := range line {
+			row = append(row, char)
+		}
+		p.m = append(p.m, row)
+	}
+
+	p.findStart()
+	return p
+}
+
+func (p *PipeMap) findStart() {
+	// Finds the coordinates of the "Start" tile
+	found := false
+	for y := 0; y < len(p.m); y++ {
+		if found {
+			break
+		}
+		for x := 0; x < len(p.m[y]); x++ {
+			if found {
+				break
+			}
+			if p.m[y][x] == 'S' {
+				p.start = Coord{
+					X: x,
+					Y: y,
+				}
+				found = true
+			}
+		}
+	}
+}
+
+func (p PipeMap) ValidCoord(c Coord) bool {
+	// given a coordinate, returns if we're in bounds.
+	if c.X <= 0 || c.Y <= 0 {
+		return false
+	}
+	if c.X >= len(p.m) || c.Y >= len(p.m[0]) {
+		return false
+	}
+	return true
+}
+
+func (p *PipeMap) GetObjectAt(c Coord) (rune, error) {
+	// This will return the rune at the given coordinate. Note, this will
+	// throw an error if the given coordinate is out of bounds on the map!
+	if c.X <= 0 || c.Y <= 0 {
+		return 'X', errors.New("negative boundary error")
+	}
+	if c.X >= len(p.m) || c.Y >= len(p.m[0]) {
+		return 'X', errors.New("positive boundary error")
+	}
+
+	return p.m[c.Y][c.X], nil
+}
+
+func (p PipeMap) GetSurrounding(c Coord) []Coord {
+	// given a coordinate, returns all surrounding coordinates that are
+	// within the boundaries. This will NOT return a coordinate if it is
+	// out of bounds.
+	var dirs = [4]int{N, S, E, W}
+	var retval []Coord
+	for d := range dirs {
+		checkCoord := c.Peek(d)
+		if p.ValidCoord(checkCoord) {
+			retval = append(retval, checkCoord)
+		}
+	}
+	return retval
+}
+
+func (p *PipeMap) DetermineStartingPipe() error {
+	// Given the starting pipe, will check the surrounding pipes to determine
+	// the shape of the pipe.
+	var dirs = [4]int{N, S, E, W}
+	var connectingDirs []int
+
+	for d := range dirs {
+		checkPipe := p.start.Peek(d) // just a Coord
+		pipeRune, err := p.GetObjectAt(checkPipe)
+		if err != nil {
+			// boundary, we don't care
+			continue
+		}
+
+		workingPipe := ReadPipe(pipeRune)
+
+		dir1, dir2, isNotPipe := workingPipe.PipeDirection()
+		if isNotPipe != nil {
+			// not a pipe, we don't care
+			continue
+		}
+
+		directionFrom := GetInverse(d)
+		if dir1 == directionFrom || dir2 == directionFrom {
+			// valid connecting pipe
+			connectingDirs = append(connectingDirs, d)
+		}
+	}
+
+	// now we have supposedly two connecting directions.
+	if len(connectingDirs) != 2 {
+		return errors.New("connecting pipes do not equal 2")
+	}
+
+	// prepare for ridiculousness
+	var startingPipe rune
+	switch connectingDirs[0] {
+	case N:
+		switch connectingDirs[1] {
+		case S:
+			startingPipe = '|'
+		case E:
+			startingPipe = 'L'
+		case W:
+			startingPipe = 'J'
+		}
+	case S:
+		switch connectingDirs[1] {
+		case N:
+			startingPipe = '|'
+		case E:
+			startingPipe = 'F'
+		case W:
+			startingPipe = '7'
+		}
+	case E:
+		switch connectingDirs[1] {
+		case N:
+			startingPipe = 'L'
+		case S:
+			startingPipe = 'F'
+		case W:
+			startingPipe = '-'
+		}
+	case W:
+		switch connectingDirs[1] {
+		case N:
+			startingPipe = 'J'
+		case S:
+			startingPipe = '7'
+		case E:
+			startingPipe = '-'
+		}
+	}
+
+	// now set the map
+	p.m[p.start.Y][p.start.X] = startingPipe
+	return nil
+}
+
+func (p PipeMap) MoveOne(c *Critter) (bool, error) {
+	// Moves the critter to one coordinate, taking care of the
+	// breadcrumbs and boundary checks. Returns an error if we
+	// hit a boundary or something, and returns true if we are
+	// able to move
+	current := c.pos
+	movements := p.GetSurrounding(current)
+
+	for dir := range movements {
+		
+	}
+}

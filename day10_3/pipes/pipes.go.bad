@@ -1,0 +1,124 @@
+package pipes
+
+import "errors"
+
+const (
+	N = iota
+	S
+	E
+	W
+)
+
+func GetInverse(dir int) int {
+	// Given a direction, it simply returns
+	// the opposite. This allows me to find
+	// out the origin of the direction. So
+	// if I go north to a new pipe object, I
+	// can use this to determine that I came
+	// from the south relational to the object
+	switch dir {
+	case N:
+		return S
+	case S:
+		return N
+	case E:
+		return W
+	case W:
+		return E
+	default:
+		return -1
+	}
+}
+
+type Coord struct {
+	X, Y int
+}
+
+func (c Coord) Peek(dir int) Coord {
+	// NO ERROR CHECKING HERE! this is up to the map
+	// to determine if we're out of bounds.
+	switch dir {
+	case N:
+		return Coord{
+			X: c.X,
+			Y: c.Y - 1,
+		}
+	case S:
+		return Coord{
+			X: c.X,
+			Y: c.Y + 1,
+		}
+	case E:
+		return Coord{
+			X: c.X + 1,
+			Y: c.Y,
+		}
+	case W:
+		return Coord{
+			X: c.X - 1,
+			Y: c.Y,
+		}
+	default:
+		return c
+	}
+}
+
+type Pipe struct {
+	Visual rune
+}
+
+func ReadPipe(r rune) Pipe {
+	// Given a rune, this will generate
+	// a Pipe object which will allow it
+	// to have relational functions
+	return Pipe{
+		Visual: r,
+	}
+}
+
+func (p Pipe) IsNothing() bool {
+	return p.Visual == '.'
+}
+
+func (p Pipe) IsStarting() bool {
+	return p.Visual == 'S'
+}
+
+func (p Pipe) PipeDirection() (int, int, error) {
+	// This function determines what
+	// directions it connects to.
+	switch p.Visual {
+	case '|':
+		return N, S, nil
+	case '-':
+		return E, W, nil
+	case 'L':
+		return N, E, nil
+	case 'J':
+		return N, W, nil
+	case '7':
+		return W, S, nil
+	case 'F':
+		return E, S, nil
+	default:
+		return 0, 0, errors.New("not a pipe")
+	}
+}
+
+func (p Pipe) IsCompatible(thisPipe Pipe) bool {
+	// Given another pipe, will check to see if it's even possible
+	// to connect these two pipes.
+	dirOrigin1, dirOrigin2
+}
+// func (p Pipe) IsConnectable(np Pipe) bool {
+// 	// This function will check if the given pipe
+// 	// can connect to the object referred to the given struct
+// 	if np.IsNothing() {
+// 		// if the asked pipe is nothing, return false
+// 		return false
+// 	}
+// 	if np.IsStarting() {
+// 		// figure out how to handle this
+// 	}
+// 	dir1, dir2
+// }

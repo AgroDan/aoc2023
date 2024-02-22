@@ -1,0 +1,43 @@
+package pipes
+
+/*
+ * This file will have to do with the
+ * statefulness of the object that is
+ * traversing the pipes.
+ */
+
+type Critter struct {
+	pos, prev   Coord
+	breadcrumbs []Coord
+}
+
+func NewCritter(start Coord) Critter {
+	// given a starting position, this
+	// will create a new Critter object
+	c := Critter{
+		pos: start,
+	}
+	c.breadcrumbs = append(c.breadcrumbs, start)
+	return c
+}
+
+func (c *Critter) Move(dir int) {
+	// Moves the critter. Note this doesn't
+	// care about the map or what's on it. It
+	// simply moves the critter in any arbitrary
+	// direction regardless of if it's valid or not.
+	to := c.pos.Peek(dir)
+	c.prev, c.pos = c.pos, to
+	c.breadcrumbs = append(c.breadcrumbs, to)
+}
+
+func (c Critter) Visited(pos Coord) bool {
+	// This function will return a true value if we have
+	// been there before. This can be useful for moving.
+	for _, v := range c.breadcrumbs {
+		if pos == v {
+			return true
+		}
+	}
+	return false
+}
