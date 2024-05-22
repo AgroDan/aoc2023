@@ -8,6 +8,7 @@ use (
 	./day12
 	./day12_2
 	./day13
+	./day14
 	./day5
 	./day6
 	./day7
